@@ -21,6 +21,7 @@ std::string base::get_name()
 {
 	return name;
 }
+
 void base::display()
 {
 	base* now = this;
@@ -40,16 +41,14 @@ void base::display()
 	}
 }
 
-
-void base::rebase(base* new_per)
+void base::rebase(base* new_head)
 {
-	if (head != nullptr) {
-		head->ar_p.erase(find(head->ar_p.begin(), head->ar_p.end(), this));
+
+	if (get_head_p() != nullptr && new_head != nullptr) {
+		get_head_p()->ar_p.erase(find(get_head_p()->ar_p.begin(), get_head_p()->ar_p.end(), this));
+		new_head->ar_p.emplace_back(this);
+		head = new_head;
 	}
-	if (new_per != nullptr) {
-		new_per->ar_p.emplace_back(this);
-	}
-	head = new_per;
 }
 
 
@@ -64,25 +63,59 @@ base::~base() {
 	}
 }
 
-base* base::find_n(std::string n)
+base* base::find_n(string n)
 {
-	if (this->name == n)
-		return this;
-	base* res=nullptr;
-	for (int i = 0; i < ar_p.size(); i++) {
+	if (this->name == n) return this;
+	base* res = nullptr;
+	for (int i = 0; i < ar_p.size(); i++)
+	{
 		res = ar_p[i]->find_n(n);
-		if (res != nullptr) {
-			return res;
-		}
+		if (res != nullptr) return res;
 	}
-	return nullptr;
+	return res;
 }
 
-void base::set_readiness(int stat)
+void base::print()
 {
-	if (head==nullptr || head->status!=0) {
-		if (stat != 0)
-			status = stat;
+	if (this->get_head_p() == nullptr) cout << name;
+	for (int i = 0; i < ar_p.size(); i++)
+	{
+		base* now = ar_p[i];
+		string tab = "";
+		while (now->get_head_p() != nullptr) {
+			now = now->get_head_p();
+			tab += "    ";
+		}
+		cout << endl << tab << ar_p[i]->get_name();
+		ar_p[i]->print();
+	}
+}
+
+void base::print_ready()
+{
+	if (this->get_head_p() == nullptr) {
+		if (status != 0) cout << name << " is ready";
+		else cout << name << " is not ready";
+	}
+	for (int i = 0; i < ar_p.size(); i++)
+	{
+		base* now = ar_p[i];
+		string tab = "";
+		while (now->get_head_p() != nullptr) {
+			now = now->get_head_p();
+			tab += "    ";
+		}
+		cout << endl << tab << ar_p[i]->get_name();
+		if (ar_p[i]->status != 0) cout << " is ready";
+		else cout << " is not ready";
+		ar_p[i]->print_ready();
+	}
+}
+
+void base::set_readiness(int s)
+{
+	if (head == nullptr || head->status != 0) {
+		if (s != 0) status = s;
 		else {
 			for (int i = 0; i < ar_p.size(); i++) {
 				ar_p[i]->set_readiness(0);
@@ -92,66 +125,31 @@ void base::set_readiness(int stat)
 	}
 }
 
-
-void base::print() {
-	if (this->get_head_p() == nullptr) {
-		cout << name;
-	}
-	for (int i = 0; i < ar_p.size(); i++) {
-		base* now = ar_p[i];
-		string tabs = "";
-		while (now->get_head_p() != nullptr) {
-			now = now->get_head_p();
-			tabs =tabs+ " " + " " + " " + " ";
-		}
-		cout << endl<<tabs << ar_p[i]->get_name();
-		ar_p[i]->print();
-	}
-}
-void base::print_ready() {
-	if (this->get_head_p() == nullptr) {
-		if (this->status != 0) cout << name << " is ready";
-			else cout << name << " is not ready";
-	}
-	for (int i = 0; i < ar_p.size(); i++) {
-		base* now = ar_p[i];
-		string tabs = "";
-		while (now->get_head_p() != nullptr) {
-			now = now->get_head_p();
-			tabs = tabs + " " + " " + " " + " ";
-		}
-		cout << endl << tabs << ar_p[i]->get_name();
-		if (ar_p[i]->status != 0) cout << " is ready";
-		else cout << " is not ready";
-		ar_p[i]->print_ready();
-	}
-}
-base* base::find_cord(string path) {
-	if (path.empty()) return nullptr;
-	if (path[0] == '.') return this;
+base* base::find_cord(string p) {
+	if (p.empty()) return nullptr;
+	if (p[0] == '.') return this;
 	base* root = this;
-	if (path[0] == '/') {
+	if (p[0] == '/') {
 		while (root->get_head_p() != nullptr) root = root->get_head_p();
+		if (p.size() == 1) return root;
+		if (p[1] == '/') {
+			p.erase(0, 2);
+			return root->find_n(p);
+		}
+		else p.erase(0, 1);
 	}
-	if (path.size() > 1 && path[0] == '/' && path[1] == '/') {
-		path.erase(0, 2);
-		return root->find_n(path);
-	}
-	else if (path[0] == '/') {
-		if (path.size() == 1) return root;
-		path.erase(0, 1);
-	}
-	int id = path.find('/');
-	string ss = path.substr(0, id == -1 ? path.size() : id);
+	int id = p.find('/');
+	string s = p;
+	if (id != -1)s = p.substr(0, id);
 	for (int i = 0; i < root->ar_p.size(); i++) {
-		base* qq = root->ar_p[i];
-		if (qq->get_name() == ss) {
+		base* o = root->ar_p[i];
+		if (o->get_name() == s) {
 			if (id == -1) {
-				return qq;
+				return o;
 			}
 			else {
-				path.erase(0, id + 1);
-				return qq->find_cord(path);
+				p.erase(0, id + 1);
+				return o->find_cord(p);
 			}
 		}
 	}

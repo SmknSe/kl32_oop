@@ -2,27 +2,28 @@
 #define BASE_H
 #include <string>
 #include <vector>
+using namespace std;
+
 class base
 {
 protected:
-	std::string name;
+	string name;
 	base* head;
-	std::vector<base*> ar_p;
 	int status;
+	vector<base*> ar_p;
 public:
 
-	base(base*, std::string = "Def_name");
-	void set_name(std::string);
-	std::string get_name();
+	base(base*, string = "Def_name");
+	void set_name(string);
+	string get_name();
 	void display();
 	void rebase(base* new_per);
 	base* get_head_p();
 	~base();
-	base* find_n(std::string);
-	void set_readiness(int stat);
+	base* find_n(string);
 	void print();
 	void print_ready();
-	base* find_cord(std::string="");
-
+	void set_readiness(int);
+	base* find_cord(string);
 };
-#endif 
+#endif

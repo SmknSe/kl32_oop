@@ -7,10 +7,11 @@
 #include "base_c4.h"
 #include "base_c5.h"
 #include "base_c6.h"
+using namespace std;
 class app : public base
 {
 public:
-	app(base_c2* p);
+	app(base* p);
 	void build_tree_objects();
 	int exec_app();
 };

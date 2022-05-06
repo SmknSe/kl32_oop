@@ -8,4 +8,3 @@ public:
 	base_c6(base*, std::string = "Default_name");
 };
 #endif
-
